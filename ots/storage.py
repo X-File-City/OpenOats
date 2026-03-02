@@ -8,9 +8,10 @@ class SessionStore:
         self.enabled = enabled
         self.path = None
         if enabled:
-            Path("data/sessions").mkdir(parents=True, exist_ok=True)
+            sessions_dir = Path.home() / "Library" / "Application Support" / "On The Spot" / "sessions"
+            sessions_dir.mkdir(parents=True, exist_ok=True)
             stamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
-            self.path = Path(f"data/sessions/{stamp}.jsonl")
+            self.path = sessions_dir / f"{stamp}.jsonl"
 
     def append(self, obj: dict):
         if not self.enabled or not self.path:

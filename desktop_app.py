@@ -115,7 +115,8 @@ class OTSApp:
         self.suggestions.pack(fill="both", expand=True, pady=(6, 0))
 
     def _first_run_wizard(self):
-        if Path("data/settings.json").exists():
+        settings_file = Path.home() / "Library" / "Application Support" / "On The Spot" / "settings.json"
+        if settings_file.exists():
             return
         messagebox.showinfo("Welcome", "Let’s do quick setup: choose KB folder and preferred backend/model.")
         kb = filedialog.askdirectory(title="Choose Knowledge Base folder (optional)")

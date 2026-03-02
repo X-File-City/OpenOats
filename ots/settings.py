@@ -2,7 +2,8 @@ import json
 from pathlib import Path
 
 
-SETTINGS_PATH = Path("data/settings.json")
+APP_DATA = Path.home() / "Library" / "Application Support" / "On The Spot"
+SETTINGS_PATH = APP_DATA / "settings.json"
 
 
 DEFAULTS = {
