@@ -3,7 +3,6 @@ import SwiftUI
 /// Content displayed in the floating overlay panel.
 struct OverlayContent: View {
     let suggestions: [Suggestion]
-    let currentSuggestion: String
     let isGenerating: Bool
     let volatileThemText: String
 
@@ -30,26 +29,28 @@ struct OverlayContent: View {
                     .lineLimit(2)
             }
 
-            // Streaming suggestion
-            if !currentSuggestion.isEmpty {
-                Text(currentSuggestion)
-                    .font(.system(size: 13, weight: .regular))
-                    .foregroundStyle(.primary)
-                    .textSelection(.enabled)
-            }
-
-            // Recent suggestions
-            if !suggestions.isEmpty && currentSuggestion.isEmpty {
+            // Most recent suggestion
+            if !suggestions.isEmpty {
                 Text(suggestions[0].text)
                     .font(.system(size: 13, weight: .regular))
                     .foregroundStyle(.primary)
                     .textSelection(.enabled)
             }
 
-            if suggestions.isEmpty && currentSuggestion.isEmpty && !isGenerating {
+            if suggestions.isEmpty && !isGenerating {
                 Text("Waiting for conversation...")
                     .font(.system(size: 12))
                     .foregroundStyle(.tertiary)
+            }
+
+            if isGenerating {
+                HStack(spacing: 4) {
+                    ProgressView()
+                        .controlSize(.mini)
+                    Text("Evaluating...")
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                }
             }
         }
         .padding(16)

@@ -73,6 +73,39 @@ actor OpenRouterClient {
         }
     }
 
+    /// Non-streaming completion for structured JSON tasks (gate decisions, state updates).
+    func complete(
+        apiKey: String,
+        model: String,
+        messages: [Message],
+        maxTokens: Int = 512
+    ) async throws -> String {
+        let request = ChatRequest(
+            model: model,
+            messages: messages,
+            stream: false,
+            max_tokens: maxTokens
+        )
+
+        var urlRequest = URLRequest(url: baseURL)
+        urlRequest.httpMethod = "POST"
+        urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        urlRequest.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        urlRequest.setValue("OnTheSpot/2.0", forHTTPHeaderField: "HTTP-Referer")
+        urlRequest.httpBody = try JSONEncoder().encode(request)
+
+        let (data, response) = try await URLSession.shared.data(for: urlRequest)
+
+        guard let httpResponse = response as? HTTPURLResponse,
+              (200...299).contains(httpResponse.statusCode) else {
+            let statusCode = (response as? HTTPURLResponse)?.statusCode ?? -1
+            throw OpenRouterError.httpError(statusCode)
+        }
+
+        let completionResponse = try JSONDecoder().decode(CompletionResponse.self, from: data)
+        return completionResponse.choices.first?.message.content ?? ""
+    }
+
     enum OpenRouterError: Error, LocalizedError {
         case httpError(Int)
 
@@ -94,6 +127,18 @@ actor OpenRouterClient {
 
         struct Delta: Codable {
             let content: String?
+        }
+    }
+
+    private struct CompletionResponse: Codable {
+        let choices: [CompletionChoice]
+
+        struct CompletionChoice: Codable {
+            let message: CompletionMessage
+        }
+
+        struct CompletionMessage: Codable {
+            let content: String
         }
     }
 }

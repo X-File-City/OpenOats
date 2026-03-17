@@ -2,31 +2,19 @@ import SwiftUI
 
 struct SuggestionsView: View {
     let suggestions: [Suggestion]
-    let currentSuggestion: String
     let isGenerating: Bool
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 12) {
-                // Streaming suggestion — parse bullets as they arrive
-                if isGenerating || !currentSuggestion.isEmpty {
-                    VStack(alignment: .leading, spacing: 6) {
-                        if isGenerating {
-                            HStack(spacing: 6) {
-                                ProgressView()
-                                    .controlSize(.mini)
-                                Text("Thinking...")
-                                    .font(.system(size: 11, weight: .medium))
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
-
-                        if !currentSuggestion.isEmpty {
-                            let bullets = parseBullets(currentSuggestion)
-                            ForEach(bullets) { bullet in
-                                BulletRow(bullet: bullet, isStreaming: true)
-                            }
-                        }
+                // Generating indicator (no partial text shown)
+                if isGenerating {
+                    HStack(spacing: 6) {
+                        ProgressView()
+                            .controlSize(.mini)
+                        Text("Evaluating...")
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundStyle(.secondary)
                     }
                     .padding(12)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -34,17 +22,17 @@ struct SuggestionsView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 8))
                 }
 
-                // Past suggestions
-                ForEach(suggestions) { suggestion in
-                    SuggestionCard(suggestion: suggestion)
+                // Suggestions — most recent first, top card emphasized
+                ForEach(Array(suggestions.enumerated()), id: \.element.id) { index, suggestion in
+                    SuggestionCard(suggestion: suggestion, isPrimary: index == 0)
                 }
 
-                if suggestions.isEmpty && currentSuggestion.isEmpty && !isGenerating {
+                if suggestions.isEmpty && !isGenerating {
                     VStack(spacing: 8) {
                         Text("No suggestions yet")
                             .font(.system(size: 13, weight: .medium))
                             .foregroundStyle(.secondary)
-                        Text("Suggestions appear when the other person speaks about topics in your knowledge base.")
+                        Text("Suggestions appear when the conversation reaches a moment where your knowledge base can help.")
                             .font(.system(size: 12))
                             .foregroundStyle(.tertiary)
                             .multilineTextAlignment(.center)
@@ -82,12 +70,10 @@ private func parseBullets(_ text: String) -> [ParsedBullet] {
             if let headline = currentHeadline {
                 bullets.append(ParsedBullet(headline: headline, detail: currentDetail))
             }
-            // Start new bullet — strip the bullet character
             let stripped = String(trimmed.dropFirst()).trimmingCharacters(in: .whitespaces)
             currentHeadline = stripped.isEmpty ? nil : stripped
             currentDetail = nil
         } else if trimmed.hasPrefix(">") {
-            // Detail line
             let detail = String(trimmed.dropFirst()).trimmingCharacters(in: .whitespaces)
             if !detail.isEmpty {
                 if currentDetail != nil {
@@ -97,7 +83,6 @@ private func parseBullets(_ text: String) -> [ParsedBullet] {
                 }
             }
         } else if !trimmed.isEmpty && trimmed != "—" {
-            // Continuation of current context — append to detail if we have a headline
             if currentHeadline != nil {
                 if currentDetail != nil {
                     currentDetail! += " " + trimmed
@@ -108,7 +93,6 @@ private func parseBullets(_ text: String) -> [ParsedBullet] {
         }
     }
 
-    // Don't forget last bullet
     if let headline = currentHeadline {
         bullets.append(ParsedBullet(headline: headline, detail: currentDetail))
     }
@@ -120,14 +104,12 @@ private func parseBullets(_ text: String) -> [ParsedBullet] {
 
 private struct BulletRow: View {
     let bullet: ParsedBullet
-    var isStreaming: Bool = false
     @State private var isExpanded = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            // Headline — always visible
             HStack(alignment: .top, spacing: 6) {
-                if bullet.detail != nil && !isStreaming {
+                if bullet.detail != nil {
                     Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
                         .font(.system(size: 9, weight: .semibold))
                         .foregroundStyle(.tertiary)
@@ -141,37 +123,36 @@ private struct BulletRow: View {
             }
             .contentShape(Rectangle())
             .onTapGesture {
-                if bullet.detail != nil && !isStreaming {
+                if bullet.detail != nil {
                     withAnimation(.easeOut(duration: 0.15)) {
                         isExpanded.toggle()
                     }
                 }
             }
 
-            // Detail — shown when expanded or streaming
-            if let detail = bullet.detail, (isExpanded || isStreaming) {
+            if let detail = bullet.detail, isExpanded {
                 Text(detail)
                     .font(.system(size: 12))
                     .foregroundStyle(.secondary)
                     .textSelection(.enabled)
-                    .padding(.leading, bullet.detail != nil && !isStreaming ? 16 : 0)
+                    .padding(.leading, 16)
             }
         }
         .padding(.vertical, 2)
     }
 }
 
-// MARK: - Suggestion Card (past suggestions)
+// MARK: - Suggestion Card
 
 private struct SuggestionCard: View {
     let suggestion: Suggestion
+    var isPrimary: Bool = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             let bullets = parseBullets(suggestion.text)
 
             if bullets.isEmpty {
-                // Fallback: show raw text if parsing yields nothing
                 Text(suggestion.text)
                     .font(.system(size: 13))
                     .foregroundStyle(.primary)
@@ -182,12 +163,17 @@ private struct SuggestionCard: View {
                 }
             }
 
+            // Source labels with header context
             if !suggestion.kbHits.isEmpty {
                 HStack(spacing: 4) {
                     Image(systemName: "doc.text")
                         .font(.system(size: 9))
-                    Text(suggestion.kbHits.map(\.sourceFile).joined(separator: ", "))
+                    let sourceLabels = suggestion.kbHits.prefix(3).map { hit in
+                        hit.headerContext.isEmpty ? hit.sourceFile : "\(hit.sourceFile) > \(hit.headerContext)"
+                    }
+                    Text(sourceLabels.joined(separator: " | "))
                         .font(.system(size: 10))
+                        .lineLimit(1)
                 }
                 .foregroundStyle(.tertiary)
                 .padding(.top, 2)
@@ -195,7 +181,7 @@ private struct SuggestionCard: View {
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.primary.opacity(0.03))
+        .background(isPrimary ? Color.accentTeal.opacity(0.06) : Color.primary.opacity(0.03))
         .clipShape(RoundedRectangle(cornerRadius: 8))
     }
 }

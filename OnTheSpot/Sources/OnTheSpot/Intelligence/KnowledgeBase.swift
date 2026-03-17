@@ -147,57 +147,76 @@ final class KnowledgeBase {
     }
 
     func search(query: String, topK: Int = 5) async -> [KBResult] {
+        return await search(queries: [query], topK: topK)
+    }
+
+    /// Multi-query search with score fusion. Deduplicates by chunk index, uses max score.
+    func search(queries: [String], topK: Int = 5) async -> [KBResult] {
         let apiKey = settings.voyageApiKey
         guard isIndexed, !chunks.isEmpty, !apiKey.isEmpty else { return [] }
 
-        // Embed the query
-        let queryEmbedding: [Float]
+        let validQueries = queries.filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+        guard !validQueries.isEmpty else { return [] }
+
+        // Embed all queries at once
+        let queryEmbeddings: [[Float]]
         do {
-            let result = try await voyageClient.embed(
+            queryEmbeddings = try await voyageClient.embed(
                 apiKey: apiKey,
-                texts: [query],
+                texts: validQueries,
                 inputType: "query"
             )
-            guard let first = result.first else { return [] }
-            queryEmbedding = first
         } catch {
             print("KB search embed error: \(error)")
             return []
         }
 
-        // Cosine similarity against all chunks
-        var scored: [(index: Int, score: Float)] = []
-        for (i, chunk) in chunks.enumerated() {
-            let sim = cosineSimilarity(queryEmbedding, chunk.embedding)
-            if sim > 0.1 {
-                scored.append((i, sim))
+        // Score fusion: for each chunk, take max cosine similarity across all queries
+        var bestScores: [Int: Float] = [:]
+        for queryEmb in queryEmbeddings {
+            for (i, chunk) in chunks.enumerated() {
+                let sim = cosineSimilarity(queryEmb, chunk.embedding)
+                if sim > 0.1 {
+                    bestScores[i] = max(bestScores[i] ?? 0, sim)
+                }
             }
         }
+
+        var scored = bestScores.map { (index: $0.key, score: $0.value) }
         scored.sort { $0.score > $1.score }
         let topCandidates = Array(scored.prefix(10))
 
         guard !topCandidates.isEmpty else { return [] }
 
-        // Rerank with Voyage
+        // Rerank with Voyage using the first (primary) query
         let candidateDocs = topCandidates.map { chunks[$0.index].text }
         do {
             let reranked = try await voyageClient.rerank(
                 apiKey: apiKey,
-                query: query,
+                query: validQueries[0],
                 documents: candidateDocs,
                 topN: topK
             )
             return reranked.map { result in
                 let originalIdx = topCandidates[result.index].index
                 let chunk = chunks[originalIdx]
-                return KBResult(text: chunk.text, sourceFile: chunk.sourceFile, score: result.score)
+                return KBResult(
+                    text: chunk.text,
+                    sourceFile: chunk.sourceFile,
+                    headerContext: chunk.headerContext,
+                    score: result.score
+                )
             }
         } catch {
-            // Fallback: return cosine-only results
             print("KB rerank error (falling back to cosine): \(error)")
             return topCandidates.prefix(topK).map { candidate in
                 let chunk = chunks[candidate.index]
-                return KBResult(text: chunk.text, sourceFile: chunk.sourceFile, score: Double(candidate.score))
+                return KBResult(
+                    text: chunk.text,
+                    sourceFile: chunk.sourceFile,
+                    headerContext: chunk.headerContext,
+                    score: Double(candidate.score)
+                )
             }
         }
     }

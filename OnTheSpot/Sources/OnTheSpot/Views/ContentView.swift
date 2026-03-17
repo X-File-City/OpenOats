@@ -26,7 +26,6 @@ struct ContentView: View {
                 sectionHeader("SUGGESTIONS")
                 SuggestionsView(
                     suggestions: suggestionEngine?.suggestions ?? [],
-                    currentSuggestion: suggestionEngine?.currentSuggestion ?? "",
                     isGenerating: suggestionEngine?.isGenerating ?? false
                 )
             }
@@ -197,7 +196,6 @@ struct ContentView: View {
     private func toggleOverlay() {
         let content = OverlayContent(
             suggestions: suggestionEngine?.suggestions ?? [],
-            currentSuggestion: suggestionEngine?.currentSuggestion ?? "",
             isGenerating: suggestionEngine?.isGenerating ?? false,
             volatileThemText: transcriptStore.volatileThemText
         )
@@ -238,15 +236,8 @@ struct ContentView: View {
         let utterances = transcriptStore.utterances
         guard let last = utterances.last else { return }
 
-        // Persist to session store + transcript log
+        // Persist to transcript log
         Task {
-            await sessionStore.appendRecord(SessionRecord(
-                speaker: last.speaker,
-                text: last.text,
-                timestamp: last.timestamp,
-                suggestions: nil,
-                kbHits: nil
-            ))
             await transcriptLogger.append(
                 speaker: last.speaker == .you ? "You" : "Them",
                 text: last.text,
@@ -257,6 +248,35 @@ struct ContentView: View {
         // Trigger suggestions on THEM utterance
         if last.speaker == .them {
             suggestionEngine?.onThemUtterance(last)
+
+            // Log session record with decision metadata (delayed to capture pipeline result)
+            Task { @MainActor in
+                // Small delay to let pipeline complete before logging
+                try? await Task.sleep(for: .seconds(5))
+                let decision = suggestionEngine?.lastDecision
+                let latestSuggestion = suggestionEngine?.suggestions.first
+                let record = SessionRecord(
+                    speaker: last.speaker,
+                    text: last.text,
+                    timestamp: last.timestamp,
+                    suggestions: latestSuggestion.map { [$0.text] },
+                    kbHits: latestSuggestion?.kbHits.map { $0.sourceFile },
+                    suggestionDecision: decision,
+                    surfacedSuggestionText: decision?.shouldSurface == true ? latestSuggestion?.text : nil,
+                    conversationStateSummary: transcriptStore.conversationState.shortSummary.isEmpty
+                        ? nil : transcriptStore.conversationState.shortSummary
+                )
+                await sessionStore.appendRecord(record)
+            }
+        } else {
+            // Log non-them utterances immediately
+            Task {
+                await sessionStore.appendRecord(SessionRecord(
+                    speaker: last.speaker,
+                    text: last.text,
+                    timestamp: last.timestamp
+                ))
+            }
         }
     }
 }
