@@ -53,7 +53,7 @@
     {
       "id": "step-3-audio-capture",
       "title": "Dual-Track Audio Capture",
-      "description": "OpenOats captures two independent audio streams simultaneously. MicCapture.swift uses AVAudioEngine for microphone input with level metering and device switching. SystemAudioCapture.swift taps macOS system audio to hear the other participants. Both streams feed into the transcription engine as separate sources.",
+      "description": "OpenOats captures two independent audio streams simultaneously. MicCapture uses AVAudioEngine for microphone input with level metering and device switching. SystemAudioCapture taps macOS system audio to hear the other participants. Both streams feed into the transcription engine as separate sources.",
       "estimatedTime": 60,
       "focusDirectory": "OpenOats/Sources/OpenOats/Audio",
       "highlightLayers": [
@@ -90,7 +90,7 @@
     {
       "id": "step-4-transcription",
       "title": "Speech-to-Text Pipeline",
-      "description": "The Transcription layer orchestrates real-time speech recognition using FluidAudio. TranscriptionEngine.swift manages model downloads (Parakeet v2/v3, Qwen3), coordinates both audio sources, and handles voice activity detection. StreamingTranscriber.swift wraps the FluidAudio streaming API for each individual audio source, producing timestamped utterances.",
+      "description": "The Transcription layer orchestrates real-time speech recognition using FluidAudio. TranscriptionEngine manages model downloads (Parakeet v2/v3, Qwen3), coordinates both audio sources, and handles voice activity detection. StreamingTranscriber wraps the FluidAudio streaming API for each individual audio source, producing timestamped utterances.",
       "estimatedTime": 60,
       "focusDirectory": "OpenOats/Sources/OpenOats/Transcription",
       "highlightLayers": [
@@ -120,7 +120,7 @@
     {
       "id": "step-5-intelligence",
       "title": "Intelligence & Knowledge Base",
-      "description": "This is where the magic happens. SuggestionEngine.swift runs a multi-stage pipeline: heuristic filtering, trigger detection, conversation state updates, KB retrieval, a 9-threshold surfacing gate, and finally LLM generation. KnowledgeBase.swift chunks your markdown files, caches embeddings locally, and performs hybrid BM25 + semantic search across multiple providers (Ollama, Voyage, OpenAI-compatible).",
+      "description": "This is where the magic happens. SuggestionEngine runs a multi-stage pipeline: heuristic filtering, trigger detection, conversation state updates, KB retrieval, a 9-threshold surfacing gate, and finally LLM generation. KnowledgeBase chunks your markdown files, caches embeddings locally, and performs hybrid BM25 + semantic search across multiple providers (Ollama, Voyage, OpenAI-compatible).",
       "estimatedTime": 120,
       "focusDirectory": "OpenOats/Sources/OpenOats/Intelligence",
       "highlightLayers": [
@@ -206,7 +206,7 @@
     {
       "id": "step-7-settings-and-storage",
       "title": "Settings & Persistence",
-      "description": "AppSettings.swift is the observable settings manager — provider selection, API keys (Keychain-backed), KB folder path, transcription model choice, and input device. Storage/ handles persistence: SessionStore (actor-based JSONL writer with delayed writes for suggestion enrichment), TemplateStore (meeting templates with built-in defaults), and TranscriptLogger (plain-text archives).",
+      "description": "AppSettings is the observable settings manager — provider selection, API keys (Keychain-backed), KB folder path, transcription model choice, and input device. Storage/ handles persistence: SessionStore (actor-based JSONL writer with delayed writes for suggestion enrichment), TemplateStore (meeting templates with built-in defaults), and TranscriptLogger (plain-text archives).",
       "estimatedTime": 60,
       "focusDirectory": "OpenOats/Sources/OpenOats",
       "highlightLayers": [
