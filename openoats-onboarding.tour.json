@@ -16,7 +16,7 @@
     {
       "id": "step-2-app-entry",
       "title": "Application Entry & Coordination",
-      "description": "The App layer is the heart of the application. OpenOatsApp.swift is the SwiftUI entry point, defining three windows: main (transcription + suggestions), notes (session history), and settings. AppCoordinator.swift acts as the shared state bridge — managing session lifecycle, template snapshots, and delegating to stores and engines across windows.",
+      "description": "The App layer is the heart of the application. OpenOatsApp.swift is the SwiftUI entry point, defining three windows: main (transcription + suggestions), notes (session history), and settings. AppCoordinator.swift acts as the shared state bridge — managing session lifecycle, template snapshots and delegating to stores and engines across windows.",
       "estimatedTime": 60,
       "focusDirectory": "OpenOats/Sources/OpenOats/App",
       "highlightLayers": [
@@ -120,7 +120,7 @@
     {
       "id": "step-5-intelligence",
       "title": "Intelligence & Knowledge Base",
-      "description": "This is where the magic happens. SuggestionEngine.swift runs a multi-stage pipeline: heuristic filtering, trigger detection (questions, decisions, disagreements), conversation state updates, KB retrieval, a 9-threshold surfacing gate, and finally LLM generation. KnowledgeBase.swift chunks your markdown files, caches embeddings locally, and performs hybrid BM25 + semantic search across multiple providers (Ollama, Voyage, OpenAI-compatible).",
+      "description": "This is where the magic happens. SuggestionEngine.swift runs a multi-stage pipeline: heuristic filtering, trigger detection, conversation state updates, KB retrieval, a 9-threshold surfacing gate, and finally LLM generation. KnowledgeBase.swift chunks your markdown files, caches embeddings locally, and performs hybrid BM25 + semantic search across multiple providers (Ollama, Voyage, OpenAI-compatible).",
       "estimatedTime": 120,
       "focusDirectory": "OpenOats/Sources/OpenOats/Intelligence",
       "highlightLayers": [
@@ -169,7 +169,7 @@
     {
       "id": "step-6-models-and-views",
       "title": "Data Models & UI",
-      "description": "Models/ defines the domain: Speaker, Utterance, ConversationState, Suggestion, MeetingTemplate, and session persistence formats. TranscriptStore holds the live transcript with volatile text buffers. Views/ contains 11 SwiftUI components — ContentView (main layout), SuggestionsView (ranked KB hits), TranscriptView (live transcript), ControlBar (session controls), and SettingsView (provider configuration).",
+      "description": "Models/ defines the domain: Speaker, Utterance, ConversationState, Suggestion, MeetingTemplate and session persistence formats. TranscriptStore holds the live transcript with volatile text buffers. Views/ contains 11 SwiftUI components — ContentView (main layout), SuggestionsView (ranked KB hits), TranscriptView (live transcript), ControlBar (session controls), and SettingsView (provider configuration).",
       "estimatedTime": 90,
       "focusDirectory": "OpenOats/Sources/OpenOats",
       "highlightLayers": [
