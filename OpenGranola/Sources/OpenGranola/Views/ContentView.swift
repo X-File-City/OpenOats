@@ -74,13 +74,15 @@ struct ContentView: View {
             ControlBar(
                 isRunning: isRunning,
                 audioLevel: audioLevel,
-                selectedModel: settings.selectedModel,
+                modelDisplayName: settings.activeModelDisplay,
                 statusMessage: transcriptionEngine?.assetStatus,
                 errorMessage: transcriptionEngine?.lastError,
-                onToggle: isRunning ? stopSession : startSession
+                needsDownload: transcriptionEngine?.needsModelDownload ?? false,
+                onToggle: isRunning ? stopSession : startSession,
+                onConfirmDownload: confirmDownloadAndStart
             )
         }
-        .frame(minWidth: 280, maxWidth: 360, minHeight: 400)
+        .frame(minWidth: 280, maxWidth: 600, minHeight: 400)
         .background(.ultraThinMaterial)
         .overlay {
             if showOnboarding {
@@ -167,12 +169,33 @@ struct ContentView: View {
                 }
             }
 
-            Button("KB Folder...") {
-                chooseKBFolder()
+            if settings.kbFolderPath.isEmpty {
+                Button("Set KB Folder...") {
+                    chooseKBFolder()
+                }
+                .buttonStyle(.plain)
+                .font(.system(size: 11))
+                .foregroundStyle(Color.accentTeal)
+            } else {
+                HStack(spacing: 4) {
+                    Button {
+                        NSWorkspace.shared.open(URL(fileURLWithPath: settings.kbFolderPath))
+                    } label: {
+                        Image(systemName: "folder")
+                            .font(.system(size: 10))
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(.secondary)
+                    .help("Open in Finder")
+
+                    Button("Change...") {
+                        chooseKBFolder()
+                    }
+                    .buttonStyle(.plain)
+                    .font(.system(size: 11))
+                    .foregroundStyle(Color.accentTeal)
+                }
             }
-            .buttonStyle(.plain)
-            .font(.system(size: 11))
-            .foregroundStyle(Color.accentTeal)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
@@ -193,6 +216,11 @@ struct ContentView: View {
     }
 
     // MARK: - Actions
+
+    private func confirmDownloadAndStart() {
+        transcriptionEngine?.downloadConfirmed = true
+        startSession()
+    }
 
     private func startSession() {
         Task {

@@ -3,10 +3,12 @@ import SwiftUI
 struct ControlBar: View {
     let isRunning: Bool
     let audioLevel: Float
-    let selectedModel: String
+    let modelDisplayName: String
     let statusMessage: String?
     let errorMessage: String?
+    let needsDownload: Bool
     let onToggle: () -> Void
+    let onConfirmDownload: () -> Void
 
     var body: some View {
         VStack(spacing: 0) {
@@ -18,6 +20,24 @@ struct ControlBar: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 4)
+            }
+
+            // Download prompt
+            if needsDownload && !isRunning {
+                VStack(spacing: 6) {
+                    Text("Transcription requires a one-time ~600MB model download.")
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    Button("Download Now") {
+                        onConfirmDownload()
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.small)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
             }
 
             // Status message (model loading, etc.)
@@ -37,20 +57,30 @@ struct ControlBar: View {
             HStack(spacing: 10) {
                 Button(action: onToggle) {
                     HStack(spacing: 6) {
-                        // Pulsing dot when live, static when idle
-                        Circle()
-                            .fill(isRunning ? Color.green : Color.gray)
-                            .frame(width: 8, height: 8)
-                            .scaleEffect(isRunning ? 1.0 + CGFloat(audioLevel) * 0.5 : 1.0)
-                            .animation(.easeOut(duration: 0.1), value: audioLevel)
+                        if isRunning {
+                            // Pulsing dot when live
+                            Circle()
+                                .fill(Color.green)
+                                .frame(width: 8, height: 8)
+                                .scaleEffect(1.0 + CGFloat(audioLevel) * 0.5)
+                                .animation(.easeOut(duration: 0.1), value: audioLevel)
 
-                        Text(isRunning ? "Live" : "Idle")
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundStyle(isRunning ? .primary : .secondary)
+                            Text("Live")
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundStyle(.primary)
+                        } else {
+                            Image(systemName: "mic.fill")
+                                .font(.system(size: 11))
+                                .foregroundStyle(.white)
+
+                            Text("Start")
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundStyle(.white)
+                        }
                     }
                     .padding(.horizontal, 12)
                     .padding(.vertical, 7)
-                    .background(isRunning ? Color.green.opacity(0.1) : Color.primary.opacity(0.04))
+                    .background(isRunning ? Color.green.opacity(0.1) : Color.accentColor)
                     .clipShape(Capsule())
                 }
                 .buttonStyle(.plain)
@@ -76,9 +106,6 @@ struct ControlBar: View {
         }
     }
 
-    private var modelDisplayName: String {
-        selectedModel.split(separator: "/").last.map(String.init) ?? selectedModel
-    }
 }
 
 /// Mini audio level visualizer — a few bars that react to mic input.

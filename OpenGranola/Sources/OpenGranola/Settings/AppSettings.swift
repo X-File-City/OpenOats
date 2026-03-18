@@ -90,7 +90,9 @@ final class AppSettings {
 
     init() {
         let defaults = UserDefaults.standard
-        self.kbFolderPath = defaults.string(forKey: "kbFolderPath") ?? ""
+        let defaultKBPath = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent("Documents/OpenGranola").path
+        self.kbFolderPath = defaults.string(forKey: "kbFolderPath") ?? defaultKBPath
         self.selectedModel = defaults.string(forKey: "selectedModel") ?? "anthropic/claude-sonnet-4"
         self.transcriptionLocale = defaults.string(forKey: "transcriptionLocale") ?? "en-US"
         self.inputDeviceID = AudioDeviceID(defaults.integer(forKey: "inputDeviceID"))
@@ -106,6 +108,14 @@ final class AppSettings {
             self.hideFromScreenShare = true
         } else {
             self.hideFromScreenShare = defaults.bool(forKey: "hideFromScreenShare")
+        }
+
+        // Ensure default KB folder exists
+        if defaults.string(forKey: "kbFolderPath") == nil {
+            try? FileManager.default.createDirectory(
+                atPath: kbFolderPath,
+                withIntermediateDirectories: true
+            )
         }
     }
 
@@ -124,6 +134,16 @@ final class AppSettings {
 
     var locale: Locale {
         Locale(identifier: transcriptionLocale)
+    }
+
+    /// The model name to display in the UI, respecting the active LLM provider.
+    var activeModelDisplay: String {
+        let raw: String
+        switch llmProvider {
+        case .openRouter: raw = selectedModel
+        case .ollama: raw = ollamaLLMModel
+        }
+        return raw.split(separator: "/").last.map(String.init) ?? raw
     }
 
 }

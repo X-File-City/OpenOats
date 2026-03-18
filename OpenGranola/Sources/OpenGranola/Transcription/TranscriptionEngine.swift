@@ -24,6 +24,10 @@ final class TranscriptionEngine {
     private(set) var isRunning = false
     private(set) var assetStatus: String = "Ready"
     private(set) var lastError: String?
+    private(set) var needsModelDownload = false
+
+    /// Whether the user has confirmed they want to download models.
+    var downloadConfirmed = false
 
     private let systemCapture = SystemAudioCapture()
     private let micCapture = MicCapture()
@@ -52,6 +56,9 @@ final class TranscriptionEngine {
 
     init(transcriptStore: TranscriptStore) {
         self.transcriptStore = transcriptStore
+        self.needsModelDownload = !AsrModels.modelsExist(
+            at: AsrModels.defaultCacheDirectory(for: .v2), version: .v2
+        )
     }
 
     func start(locale: Locale, inputDeviceID: AudioDeviceID = 0) async {
@@ -59,12 +66,17 @@ final class TranscriptionEngine {
         guard !isRunning else { return }
         lastError = nil
 
+        // Block start if models need downloading and user hasn't confirmed
+        if needsModelDownload && !downloadConfirmed {
+            return
+        }
+
         guard await ensureMicrophonePermission() else { return }
 
         isRunning = true
 
         // 1. Load FluidAudio models
-        assetStatus = "Loading ASR model (~600MB first run)..."
+        assetStatus = needsModelDownload ? "Downloading ASR model (~600MB)..." : "Loading ASR model..."
         diagLog("[ENGINE-1] loading FluidAudio ASR models...")
         do {
             let models = try await AsrModels.downloadAndLoad(version: .v2)
@@ -78,6 +90,8 @@ final class TranscriptionEngine {
             let vad = try await VadManager()
             self.vadManager = vad
 
+            needsModelDownload = false
+            downloadConfirmed = false
             assetStatus = "Models ready"
             diagLog("[ENGINE-2] FluidAudio models loaded")
         } catch {

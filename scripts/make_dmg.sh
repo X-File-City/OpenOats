@@ -20,9 +20,16 @@ TEMP_DMG="dist/OpenGranola_temp.dmg"
 rm -rf "$STAGING_DIR" "$TEMP_DMG"
 mkdir -p "$STAGING_DIR"
 
-# Copy app and create Applications symlink
+# Copy app and create Applications alias (Finder alias renders with proper icon, unlike symlinks)
 cp -R "$APP_PATH" "$STAGING_DIR/"
-ln -s /Applications "$STAGING_DIR/Applications"
+osascript -e "tell application \"Finder\" to make alias file to POSIX file \"/Applications\" at POSIX file \"$(cd "$STAGING_DIR" && pwd)\""
+# Finder creates "Applications alias" — rename to "Applications"
+if [[ -e "$STAGING_DIR/Applications alias" ]]; then
+  mv "$STAGING_DIR/Applications alias" "$STAGING_DIR/Applications"
+elif [[ ! -e "$STAGING_DIR/Applications" ]]; then
+  # Fallback to symlink if alias creation fails
+  ln -s /Applications "$STAGING_DIR/Applications"
+fi
 
 # Create a temporary read-write DMG
 hdiutil create -volname "OpenGranola" -srcfolder "$STAGING_DIR" -ov -format UDRW "$TEMP_DMG"
