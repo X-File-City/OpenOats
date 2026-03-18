@@ -16,7 +16,7 @@
     {
       "id": "step-2-app-entry",
       "title": "Application Entry & Coordination",
-      "description": "The App layer is the heart of the application. OpenOatsApp.swift is the SwiftUI entry point, defining three windows: main (transcription + suggestions), notes (session history), and settings. AppCoordinator.swift acts as the shared state bridge — managing session lifecycle, template snapshots and delegating to stores and engines across windows.",
+      "description": "The App layer is the heart of the application. OpenOatsApp is the SwiftUI entry point, defining three windows: main (transcription + suggestions), notes (session history), and settings. AppCoordinator acts as the shared state bridge — managing session lifecycle, template snapshots and delegating to stores and engines across windows.",
       "estimatedTime": 60,
       "focusDirectory": "OpenOats/Sources/OpenOats/App",
       "highlightLayers": [
