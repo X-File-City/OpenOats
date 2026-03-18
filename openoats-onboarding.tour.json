@@ -120,7 +120,7 @@
     {
       "id": "step-5-intelligence",
       "title": "Intelligence & Knowledge Base",
-      "description": "This is where the magic happens. SuggestionEngine.swift runs a multi-stage pipeline: heuristic filtering, trigger detection (questions, decisions, disagreements), conversation state updates, KB retrieval, a 9-threshold surfacing gate, and finally LLM generation. KnowledgeBase.swift chunks your markdown files, caches embeddings locally, and performs hybrid BM25 + semantic search across multiple providers (Voyage, Ollama, OpenAI-compatible).",
+      "description": "This is where the magic happens. SuggestionEngine.swift runs a multi-stage pipeline: heuristic filtering, trigger detection (questions, decisions, disagreements), conversation state updates, KB retrieval, a 9-threshold surfacing gate, and finally LLM generation. KnowledgeBase.swift chunks your markdown files, caches embeddings locally, and performs hybrid BM25 + semantic search across multiple providers (Ollama, Voyage, OpenAI-compatible).",
       "estimatedTime": 120,
       "focusDirectory": "OpenOats/Sources/OpenOats/Intelligence",
       "highlightLayers": [
@@ -239,48 +239,6 @@
       "description": "Here's the full data flow: Audio (mic + system) feeds into the Transcription engine, which produces Utterances stored in TranscriptStore. Finalized utterances trigger the Intelligence pipeline — heuristic filtering, trigger detection, KB search, surfacing gate, and LLM generation. Suggestions appear in the UI. Sessions are persisted as JSONL with metadata sidecars. All processing is local; cloud calls are optional and provider-agnostic. Explore freely!",
       "estimatedTime": 90,
       "focusDirectory": "",
-      "highlightLayers": [
-        {
-          "id": "audio-layer",
-          "name": "Audio Capture",
-          "color": "#3b82f6",
-          "items": [
-            { "path": "OpenOats/Sources/OpenOats/Audio", "type": "directory" }
-          ],
-          "opacity": 0.5,
-          "renderStrategy": "border"
-        },
-        {
-          "id": "transcription-layer",
-          "name": "Transcription",
-          "color": "#f59e0b",
-          "items": [
-            { "path": "OpenOats/Sources/OpenOats/Transcription", "type": "directory" }
-          ],
-          "opacity": 0.5,
-          "renderStrategy": "border"
-        },
-        {
-          "id": "intelligence-layer",
-          "name": "Intelligence",
-          "color": "#ef4444",
-          "items": [
-            { "path": "OpenOats/Sources/OpenOats/Intelligence", "type": "directory" }
-          ],
-          "opacity": 0.5,
-          "renderStrategy": "border"
-        },
-        {
-          "id": "ui-layer",
-          "name": "UI & Views",
-          "color": "#10b981",
-          "items": [
-            { "path": "OpenOats/Sources/OpenOats/Views", "type": "directory" }
-          ],
-          "opacity": 0.5,
-          "renderStrategy": "border"
-        }
-      ],
       "colorMode": "fileTypes",
       "interactiveActions": [
         {
