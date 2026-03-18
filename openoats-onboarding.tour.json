@@ -1,0 +1,298 @@
+{
+  "id": "openoats-onboarding",
+  "title": "OpenOats Architecture Tour",
+  "description": "Explore how OpenOats captures audio, transcribes speech, and surfaces intelligent suggestions from your knowledge base — all running locally on macOS",
+  "version": "1.0.0",
+  "audience": "New Contributors & AI Assistants",
+  "prerequisites": ["Basic Swift/SwiftUI knowledge", "Familiarity with macOS development"],
+  "steps": [
+    {
+      "id": "step-1-overview",
+      "title": "Welcome to OpenOats",
+      "description": "OpenOats is a macOS meeting note-taker that transcribes conversations in real-time and surfaces relevant talking points from your personal knowledge base. Everything runs locally — zero audio leaves your device. The codebase lives inside a Swift Package (OpenOats/) with sources organized into 8 architectural layers.",
+      "estimatedTime": 45,
+      "colorMode": "fileTypes"
+    },
+    {
+      "id": "step-2-app-entry",
+      "title": "Application Entry & Coordination",
+      "description": "The App layer is the heart of the application. OpenOatsApp.swift is the SwiftUI entry point, defining three windows: main (transcription + suggestions), notes (session history), and settings. AppCoordinator.swift acts as the shared state bridge — managing session lifecycle, template snapshots, and delegating to stores and engines across windows.",
+      "estimatedTime": 60,
+      "focusDirectory": "OpenOats/Sources/OpenOats/App",
+      "highlightLayers": [
+        {
+          "id": "app-entry",
+          "name": "App Entry Point",
+          "color": "#8b5cf6",
+          "items": [
+            { "path": "OpenOats/Sources/OpenOats/App/OpenOatsApp.swift", "type": "file" }
+          ],
+          "opacity": 0.8,
+          "renderStrategy": "fill"
+        },
+        {
+          "id": "coordinator",
+          "name": "State Coordinator",
+          "color": "#ec4899",
+          "items": [
+            { "path": "OpenOats/Sources/OpenOats/App/AppCoordinator.swift", "type": "file" }
+          ],
+          "opacity": 0.8,
+          "renderStrategy": "fill"
+        }
+      ],
+      "colorMode": "fileTypes",
+      "interactiveActions": [
+        {
+          "type": "click-file",
+          "description": "Click OpenOatsApp.swift to see the three-window SwiftUI app definition",
+          "target": "OpenOats/Sources/OpenOats/App/OpenOatsApp.swift"
+        }
+      ]
+    },
+    {
+      "id": "step-3-audio-capture",
+      "title": "Dual-Track Audio Capture",
+      "description": "OpenOats captures two independent audio streams simultaneously. MicCapture.swift uses AVAudioEngine for microphone input with level metering and device switching. SystemAudioCapture.swift taps macOS system audio to hear the other participants. Both streams feed into the transcription engine as separate sources.",
+      "estimatedTime": 60,
+      "focusDirectory": "OpenOats/Sources/OpenOats/Audio",
+      "highlightLayers": [
+        {
+          "id": "mic-capture",
+          "name": "Microphone Input",
+          "color": "#3b82f6",
+          "items": [
+            { "path": "OpenOats/Sources/OpenOats/Audio/MicCapture.swift", "type": "file" }
+          ],
+          "opacity": 0.8,
+          "renderStrategy": "fill"
+        },
+        {
+          "id": "system-capture",
+          "name": "System Audio",
+          "color": "#06b6d4",
+          "items": [
+            { "path": "OpenOats/Sources/OpenOats/Audio/SystemAudioCapture.swift", "type": "file" }
+          ],
+          "opacity": 0.8,
+          "renderStrategy": "fill"
+        }
+      ],
+      "colorMode": "fileTypes",
+      "interactiveActions": [
+        {
+          "type": "click-file",
+          "description": "Click MicCapture.swift to see AVAudioEngine mic handling and device switching",
+          "target": "OpenOats/Sources/OpenOats/Audio/MicCapture.swift"
+        }
+      ]
+    },
+    {
+      "id": "step-4-transcription",
+      "title": "Speech-to-Text Pipeline",
+      "description": "The Transcription layer orchestrates real-time speech recognition using FluidAudio. TranscriptionEngine.swift manages model downloads (Parakeet v2/v3, Qwen3), coordinates both audio sources, and handles voice activity detection. StreamingTranscriber.swift wraps the FluidAudio streaming API for each individual audio source, producing timestamped utterances.",
+      "estimatedTime": 60,
+      "focusDirectory": "OpenOats/Sources/OpenOats/Transcription",
+      "highlightLayers": [
+        {
+          "id": "transcription-engine",
+          "name": "Transcription Orchestrator",
+          "color": "#f59e0b",
+          "items": [
+            { "path": "OpenOats/Sources/OpenOats/Transcription/TranscriptionEngine.swift", "type": "file" }
+          ],
+          "opacity": 0.8,
+          "renderStrategy": "fill"
+        },
+        {
+          "id": "streaming-transcriber",
+          "name": "Streaming ASR Wrapper",
+          "color": "#f97316",
+          "items": [
+            { "path": "OpenOats/Sources/OpenOats/Transcription/StreamingTranscriber.swift", "type": "file" }
+          ],
+          "opacity": 0.8,
+          "renderStrategy": "fill"
+        }
+      ],
+      "colorMode": "fileTypes"
+    },
+    {
+      "id": "step-5-intelligence",
+      "title": "Intelligence & Knowledge Base",
+      "description": "This is where the magic happens. SuggestionEngine.swift runs a multi-stage pipeline: heuristic filtering, trigger detection (questions, decisions, disagreements), conversation state updates, KB retrieval, a 9-threshold surfacing gate, and finally LLM generation. KnowledgeBase.swift chunks your markdown files, caches embeddings locally, and performs hybrid BM25 + semantic search across multiple providers (Voyage, Ollama, OpenAI-compatible).",
+      "estimatedTime": 120,
+      "focusDirectory": "OpenOats/Sources/OpenOats/Intelligence",
+      "highlightLayers": [
+        {
+          "id": "suggestion-engine",
+          "name": "Suggestion Pipeline",
+          "color": "#ef4444",
+          "items": [
+            { "path": "OpenOats/Sources/OpenOats/Intelligence/SuggestionEngine.swift", "type": "file" }
+          ],
+          "opacity": 0.8,
+          "renderStrategy": "fill"
+        },
+        {
+          "id": "knowledge-base",
+          "name": "Knowledge Base Search",
+          "color": "#10b981",
+          "items": [
+            { "path": "OpenOats/Sources/OpenOats/Intelligence/KnowledgeBase.swift", "type": "file" }
+          ],
+          "opacity": 0.8,
+          "renderStrategy": "fill"
+        },
+        {
+          "id": "api-clients",
+          "name": "LLM & Embedding Clients",
+          "color": "#a855f7",
+          "items": [
+            { "path": "OpenOats/Sources/OpenOats/Intelligence/OpenRouterClient.swift", "type": "file" },
+            { "path": "OpenOats/Sources/OpenOats/Intelligence/OllamaEmbedClient.swift", "type": "file" },
+            { "path": "OpenOats/Sources/OpenOats/Intelligence/VoyageClient.swift", "type": "file" }
+          ],
+          "opacity": 0.6,
+          "renderStrategy": "border"
+        }
+      ],
+      "colorMode": "fileTypes",
+      "interactiveActions": [
+        {
+          "type": "click-file",
+          "description": "Click SuggestionEngine.swift to see the full multi-stage suggestion pipeline",
+          "target": "OpenOats/Sources/OpenOats/Intelligence/SuggestionEngine.swift"
+        }
+      ]
+    },
+    {
+      "id": "step-6-models-and-views",
+      "title": "Data Models & UI",
+      "description": "Models/ defines the domain: Speaker, Utterance, ConversationState, Suggestion, MeetingTemplate, and session persistence formats. TranscriptStore holds the live transcript with volatile text buffers. Views/ contains 11 SwiftUI components — ContentView (main layout), SuggestionsView (ranked KB hits), TranscriptView (live transcript), ControlBar (session controls), and SettingsView (provider configuration).",
+      "estimatedTime": 90,
+      "focusDirectory": "OpenOats/Sources/OpenOats",
+      "highlightLayers": [
+        {
+          "id": "models-layer",
+          "name": "Data Models",
+          "color": "#f59e0b",
+          "items": [
+            { "path": "OpenOats/Sources/OpenOats/Models", "type": "directory" }
+          ],
+          "opacity": 0.6,
+          "renderStrategy": "border"
+        },
+        {
+          "id": "views-layer",
+          "name": "SwiftUI Views",
+          "color": "#10b981",
+          "items": [
+            { "path": "OpenOats/Sources/OpenOats/Views", "type": "directory" }
+          ],
+          "opacity": 0.6,
+          "renderStrategy": "border"
+        }
+      ],
+      "colorMode": "fileTypes",
+      "interactiveActions": [
+        {
+          "type": "hover-directory",
+          "description": "Hover over the Views directory to see all 11 SwiftUI components",
+          "target": "OpenOats/Sources/OpenOats/Views"
+        }
+      ]
+    },
+    {
+      "id": "step-7-settings-and-storage",
+      "title": "Settings & Persistence",
+      "description": "AppSettings.swift is the observable settings manager — provider selection, API keys (Keychain-backed), KB folder path, transcription model choice, and input device. Storage/ handles persistence: SessionStore (actor-based JSONL writer with delayed writes for suggestion enrichment), TemplateStore (meeting templates with built-in defaults), and TranscriptLogger (plain-text archives).",
+      "estimatedTime": 60,
+      "focusDirectory": "OpenOats/Sources/OpenOats",
+      "highlightLayers": [
+        {
+          "id": "settings-layer",
+          "name": "Settings",
+          "color": "#6366f1",
+          "items": [
+            { "path": "OpenOats/Sources/OpenOats/Settings", "type": "directory" }
+          ],
+          "opacity": 0.6,
+          "renderStrategy": "border"
+        },
+        {
+          "id": "storage-layer",
+          "name": "Storage & Persistence",
+          "color": "#0ea5e9",
+          "items": [
+            { "path": "OpenOats/Sources/OpenOats/Storage", "type": "directory" }
+          ],
+          "opacity": 0.6,
+          "renderStrategy": "border"
+        }
+      ],
+      "colorMode": "fileTypes"
+    },
+    {
+      "id": "step-8-full-architecture",
+      "title": "Putting It All Together",
+      "description": "Here's the full data flow: Audio (mic + system) feeds into the Transcription engine, which produces Utterances stored in TranscriptStore. Finalized utterances trigger the Intelligence pipeline — heuristic filtering, trigger detection, KB search, surfacing gate, and LLM generation. Suggestions appear in the UI. Sessions are persisted as JSONL with metadata sidecars. All processing is local; cloud calls are optional and provider-agnostic. Explore freely!",
+      "estimatedTime": 90,
+      "focusDirectory": "",
+      "highlightLayers": [
+        {
+          "id": "audio-layer",
+          "name": "Audio Capture",
+          "color": "#3b82f6",
+          "items": [
+            { "path": "OpenOats/Sources/OpenOats/Audio", "type": "directory" }
+          ],
+          "opacity": 0.5,
+          "renderStrategy": "border"
+        },
+        {
+          "id": "transcription-layer",
+          "name": "Transcription",
+          "color": "#f59e0b",
+          "items": [
+            { "path": "OpenOats/Sources/OpenOats/Transcription", "type": "directory" }
+          ],
+          "opacity": 0.5,
+          "renderStrategy": "border"
+        },
+        {
+          "id": "intelligence-layer",
+          "name": "Intelligence",
+          "color": "#ef4444",
+          "items": [
+            { "path": "OpenOats/Sources/OpenOats/Intelligence", "type": "directory" }
+          ],
+          "opacity": 0.5,
+          "renderStrategy": "border"
+        },
+        {
+          "id": "ui-layer",
+          "name": "UI & Views",
+          "color": "#10b981",
+          "items": [
+            { "path": "OpenOats/Sources/OpenOats/Views", "type": "directory" }
+          ],
+          "opacity": 0.5,
+          "renderStrategy": "border"
+        }
+      ],
+      "colorMode": "fileTypes",
+      "interactiveActions": [
+        {
+          "type": "explore",
+          "description": "Explore the codebase freely — click any building to see its contents"
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "author": "Claude Code",
+    "createdAt": "2026-03-18",
+    "tags": ["onboarding", "architecture", "macos", "swift"]
+  }
+}
